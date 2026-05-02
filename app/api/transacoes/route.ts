@@ -8,7 +8,7 @@ export async function GET() {
     const supabase = getSupabase()
     const { data, error } = await supabase
       .from('transacoes')
-      .select('*')
+      .select('*, clientes(nome, cidade)')
       .order('data_transferencia', { ascending: false })
       .order('created_at', { ascending: false })
 

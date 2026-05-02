@@ -1,9 +1,12 @@
 import type { Transacao, TransacaoComStatus, Status, Metrics } from './types'
 
-export const DIAS_ATRASADO = 30
+// Dias sem retorno para considerar uma transação como "atrasada"
+// Para alterar: mude este valor e faça redeploy
+export const DIAS_ATRASADO = 7
 
 export const MARCAS_CIMENTO = [
-  'FACIMENT', 'POTY',
+  'Votoran', 'Itambé', 'Cauê', 'Nassau',
+  'CP II', 'CP III', 'CP IV', 'Votorantim', 'Outro',
 ]
 
 export function diasDesde(dateStr: string): number {
@@ -33,6 +36,7 @@ export function calcularMetrics(txs: TransacaoComStatus[]): Metrics {
     total_a_receber: pendentes.reduce((s, t) => s + t.valor_transferido + t.lucro_esperado, 0),
     lucro_recebido: retornadas.reduce((s, t) => s + t.lucro_esperado, 0),
     qtd_atrasadas: txs.filter(t => t.status === 'atrasado').length,
+    qtd_nao_pagos: pendentes.length,
     qtd_total: txs.length,
   }
 }

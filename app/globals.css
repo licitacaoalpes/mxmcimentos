@@ -2,28 +2,136 @@
 @tailwind components;
 @tailwind utilities;
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
 
-body {
-  font-family: 'Inter', system-ui, sans-serif;
-  background-color: #f8fafc;
-  color: #0f172a;
+/* ─── Dark theme (default) ───────────────────────── */
+:root,
+[data-theme="dark"] {
+  --c-bg: #07111E;
+  --c-card: #0C1929;
+  --c-elevated: #0D1E35;
+  --c-input: #060E1A;
+  --c-border: rgba(59, 130, 246, 0.1);
+  --c-border-2: rgba(59, 130, 246, 0.18);
+  --c-border-3: rgba(59, 130, 246, 0.3);
+  --c-text: #D2E6FF;
+  --c-text-2: #5C7CA8;
+  --c-text-3: #3D5C80;
+  --c-text-4: #2A4060;
+  --c-row-hover: rgba(59, 130, 246, 0.04);
+  --c-thead: rgba(59, 130, 246, 0.04);
+  --c-accent: rgba(59, 130, 246, 0.1);
+  --c-accent-2: rgba(59, 130, 246, 0.15);
+  --c-sidebar: #0A1524;
+  --c-sidebar-border: rgba(59, 130, 246, 0.08);
+  --c-sidebar-text: #3D5C80;
+  --c-sidebar-active: #60A5FA;
+  --c-sidebar-active-bg: rgba(59, 130, 246, 0.15);
+  --c-sidebar-active-border: rgba(59, 130, 246, 0.2);
+  --c-blue: #3B82F6;
+  --c-blue-d: #2563EB;
+  --c-green: #10B981;
+  --c-amber: #F59E0B;
+  --c-red: #EF4444;
+  --c-green-text: #34D399;
+  --c-amber-text: #FCD34D;
+  --c-red-text: #F87171;
+  --c-blue-text: #60A5FA;
+  --c-chart-grid: rgba(59, 130, 246, 0.07);
+  --c-chart-tick: #3D5C80;
+  --c-modal-backdrop: rgba(0, 0, 0, 0.7);
+  --c-modal-shadow: 0 24px 80px rgba(0, 0, 0, 0.7);
 }
 
-/* Input / Select base styles */
+/* ─── Light theme ────────────────────────────────── */
+[data-theme="light"] {
+  --c-bg: #EDF2FA;
+  --c-card: #FFFFFF;
+  --c-elevated: #FFFFFF;
+  --c-input: #F0F5FF;
+  --c-border: rgba(59, 130, 246, 0.12);
+  --c-border-2: rgba(59, 130, 246, 0.22);
+  --c-border-3: rgba(59, 130, 246, 0.38);
+  --c-text: #0A1525;
+  --c-text-2: #4A6080;
+  --c-text-3: #7090A8;
+  --c-text-4: #9AB0C0;
+  --c-row-hover: rgba(59, 130, 246, 0.03);
+  --c-thead: rgba(59, 130, 246, 0.03);
+  --c-accent: rgba(59, 130, 246, 0.07);
+  --c-accent-2: rgba(59, 130, 246, 0.12);
+  --c-sidebar: #1A3050;
+  --c-sidebar-border: rgba(255, 255, 255, 0.06);
+  --c-sidebar-text: #4D7090;
+  --c-sidebar-active: #60A5FA;
+  --c-sidebar-active-bg: rgba(59, 130, 246, 0.2);
+  --c-sidebar-active-border: rgba(59, 130, 246, 0.3);
+  --c-blue: #2563EB;
+  --c-blue-d: #1D4ED8;
+  --c-green: #059669;
+  --c-amber: #D97706;
+  --c-red: #DC2626;
+  --c-green-text: #059669;
+  --c-amber-text: #B45309;
+  --c-red-text: #DC2626;
+  --c-blue-text: #2563EB;
+  --c-chart-grid: rgba(59, 130, 246, 0.08);
+  --c-chart-tick: #7090A8;
+  --c-modal-backdrop: rgba(0, 0, 0, 0.4);
+  --c-modal-shadow: 0 8px 40px rgba(0, 0, 0, 0.15);
+}
+
+body {
+  font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+  background-color: var(--c-bg);
+  color: var(--c-text);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
 input[type="text"],
 input[type="number"],
 input[type="date"],
 input[type="password"],
+input[type="email"],
+input[type="tel"],
 select,
 textarea {
-  @apply w-full px-3 py-2 text-sm border border-gray-200 rounded-lg bg-white
-         text-gray-900 placeholder-gray-400
-         focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
-         transition-colors;
+  @apply w-full px-3.5 py-2.5 text-sm rounded-xl transition-all duration-200;
+  background: var(--c-input);
+  border: 1px solid var(--c-border);
+  color: var(--c-text);
+  font-family: inherit;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  outline: none;
+  border-color: var(--c-blue);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: var(--c-text-4);
+}
+
+select option {
+  background: var(--c-card);
+  color: var(--c-text);
 }
 
 textarea {
   resize: vertical;
   font-family: inherit;
 }
+
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: var(--c-border-2);
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover { background: var(--c-border-3); }
