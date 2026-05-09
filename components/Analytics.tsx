@@ -38,6 +38,7 @@ const STATUS_CFG = [
 ]
 
 const PERIODOS = [
+  { label: 'Mês',  dias: -1    }, // mês corrente (do dia 1 até hoje)
   { label: '30d',  dias: 30    },
   { label: '90d',  dias: 90    },
   { label: '6m',   dias: 180   },
@@ -177,6 +178,11 @@ export default function Analytics() {
 
   const filtradas = useMemo(() => {
     if (periodo >= 99999) return txs
+    if (periodo === -1) {
+      const now = new Date()
+      const inicioMes = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().slice(0, 10)
+      return txs.filter(t => t.data_transferencia >= inicioMes)
+    }
     const cutoff = new Date()
     cutoff.setDate(cutoff.getDate() - periodo)
     return txs.filter(t => t.data_transferencia >= cutoff.toISOString().slice(0, 10))
@@ -358,7 +364,7 @@ export default function Analytics() {
         <div>
           <h2 className="text-lg font-extrabold tracking-tight" style={{ color: 'var(--c-text)' }}>Análises</h2>
           <p className="text-xs mt-0.5" style={{ color: 'var(--c-text-4)' }}>
-            {filtradas.length} operações · {periodo < 99999 ? `últimos ${periodo}d` : 'todo o histórico'}
+            {filtradas.length} operações · {periodo === -1 ? 'mês atual' : periodo < 99999 ? `últimos ${periodo}d` : 'todo o histórico'}
           </p>
         </div>
         <div className="flex items-center gap-1 rounded-xl p-1"

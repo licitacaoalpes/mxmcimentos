@@ -193,24 +193,36 @@ export default function TransacaoTable({
                   <p className="text-[9px] uppercase font-bold mb-1" style={{ color: 'var(--c-text-4)' }}>Transferido</p>
                   <p className="text-sm font-bold" style={{ color: 'var(--c-text)' }}>{brl(t.valor_transferido)}</p>
                 </div>
-                <div className="rounded-xl p-3" style={{ background: 'var(--c-accent)', border: '1px solid var(--c-border)' }}>
-                  <p className="text-[9px] uppercase font-bold mb-1" style={{ color: 'var(--c-text-4)' }}>A receber</p>
-                  <p className="text-sm font-bold" style={{ color: 'var(--c-text)' }}>{brl(total)}</p>
+                <div className="rounded-xl p-3" style={{
+                  background: t.status === 'retornado' ? 'rgba(16,185,129,0.06)' : temParcial ? 'rgba(139,92,246,0.06)' : 'var(--c-accent)',
+                  border: `1px solid ${t.status === 'retornado' ? 'rgba(16,185,129,0.15)' : temParcial ? 'rgba(139,92,246,0.15)' : 'var(--c-border)'}`,
+                }}>
+                  <p className="text-[9px] uppercase font-bold mb-1" style={{ color: 'var(--c-text-4)' }}>
+                    {t.status === 'retornado' ? 'Situação' : 'Falta receber'}
+                  </p>
+                  {t.status === 'retornado' ? (
+                    <p className="text-sm font-bold" style={{ color: 'var(--c-green-text)' }}>✓ Recebido</p>
+                  ) : temParcial ? (
+                    <>
+                      <p className="text-sm font-bold" style={{ color: '#A78BFA' }}>{brl(total - recebido)}</p>
+                      <p className="text-[9px] mt-0.5 font-medium" style={{ color: 'var(--c-text-4)' }}>de {brl(total)}</p>
+                    </>
+                  ) : (
+                    <p className="text-sm font-bold" style={{ color: 'var(--c-text)' }}>{brl(total)}</p>
+                  )}
                 </div>
                 <div className="rounded-xl p-3" style={{ background: 'rgba(16,185,129,0.06)', border: '1px solid rgba(16,185,129,0.12)' }}>
                   <p className="text-[9px] uppercase font-bold mb-1" style={{ color: 'var(--c-text-4)' }}>Lucro</p>
                   <p className="text-sm font-bold" style={{ color: 'var(--c-green-text)' }}>{brl(t.lucro_esperado)}</p>
                 </div>
                 <div className="rounded-xl p-3" style={{
-                  background: temParcial ? 'rgba(139,92,246,0.06)' : t.status === 'retornado' ? 'rgba(16,185,129,0.06)' : 'var(--c-accent)',
-                  border: `1px solid ${temParcial ? 'rgba(139,92,246,0.15)' : t.status === 'retornado' ? 'rgba(16,185,129,0.12)' : 'var(--c-border)'}`,
+                  background: (temParcial || t.status === 'retornado') ? 'rgba(16,185,129,0.06)' : 'var(--c-accent)',
+                  border: `1px solid ${(temParcial || t.status === 'retornado') ? 'rgba(16,185,129,0.12)' : 'var(--c-border)'}`,
                 }}>
-                  <p className="text-[9px] uppercase font-bold mb-1" style={{ color: 'var(--c-text-4)' }}>Recebido</p>
-                  {temParcial
-                    ? <p className="text-sm font-bold" style={{ color: '#A78BFA' }}>{brl(recebido)}</p>
-                    : t.status === 'retornado'
-                      ? <p className="text-sm font-bold" style={{ color: 'var(--c-green-text)' }}>{brl(recebido > 0 ? recebido : total)}</p>
-                      : <p className="text-sm font-bold" style={{ color: 'var(--c-text-3)' }}>—</p>
+                  <p className="text-[9px] uppercase font-bold mb-1" style={{ color: 'var(--c-text-4)' }}>Já recebido</p>
+                  {(temParcial || t.status === 'retornado')
+                    ? <p className="text-sm font-bold" style={{ color: 'var(--c-green-text)' }}>{brl(recebido > 0 ? recebido : total)}</p>
+                    : <p className="text-sm font-bold" style={{ color: 'var(--c-text-3)' }}>—</p>
                   }
                 </div>
               </div>
@@ -266,7 +278,7 @@ export default function TransacaoTable({
               {[
                 'Cliente',
                 'Transferido',
-                'A receber',
+                'Falta receber',
                 'Recebido',
                 'Lucro',
                 'Data · Dias',
@@ -312,7 +324,16 @@ export default function TransacaoTable({
 
                   {/* A receber */}
                   <td className="px-4 py-3">
-                    <p className="font-semibold" style={{ color: 'var(--c-text)' }}>{brl(total)}</p>
+                    {t.status === 'retornado' ? (
+                      <p className="font-semibold" style={{ color: 'var(--c-green-text)' }}>✓ Recebido</p>
+                    ) : temParcial ? (
+                      <>
+                        <p className="font-semibold" style={{ color: '#A78BFA' }}>{brl(total - recebido)}</p>
+                        <p className="text-[10px] mt-0.5" style={{ color: 'var(--c-text-4)' }}>de {brl(total)}</p>
+                      </>
+                    ) : (
+                      <p className="font-semibold" style={{ color: 'var(--c-text)' }}>{brl(total)}</p>
+                    )}
                   </td>
 
                   {/* Recebido / progresso */}
