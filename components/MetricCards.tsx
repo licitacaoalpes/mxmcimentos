@@ -83,9 +83,15 @@ export default function MetricCards({ metrics }: Props) {
         }
       />
       <Card
-        label="Atrasadas"
+        label="Atrasos"
         value={metrics.qtd_atrasadas}
-        sub={metrics.qtd_atrasadas > 0 ? 'cobrar agora!' : 'tudo em dia'}
+        sub={
+          metrics.qtd_atrasadas === 0
+            ? 'tudo em dia'
+            : metrics.qtd_parcial_atrasado > 0
+              ? `${metrics.qtd_atrasadas - metrics.qtd_parcial_atrasado} atrasada(s) · ${metrics.qtd_parcial_atrasado} parcial(is)`
+              : 'cobrar agora!'
+        }
         accent={metrics.qtd_atrasadas > 0 ? '#EF4444' : '#10B981'}
         icon={
           metrics.qtd_atrasadas > 0 ? (

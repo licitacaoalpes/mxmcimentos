@@ -37,7 +37,8 @@ export interface Metrics {
   total_investido_pendente: number
   total_a_receber: number
   lucro_recebido: number
-  qtd_atrasadas: number
+  qtd_atrasadas: number        // atrasado + parcial_atrasado
+  qtd_parcial_atrasado: number // só parcial_atrasado
   qtd_nao_pagos: number
   qtd_total: number
   valor_em_aberto: number

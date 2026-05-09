@@ -48,6 +48,7 @@ export function calcularMetrics(txs: TransacaoComStatus[]): Metrics {
     total_a_receber: pendentes.reduce((s, t) => s + t.valor_transferido + t.lucro_esperado, 0),
     lucro_recebido: retornadas.reduce((s, t) => s + t.lucro_esperado, 0),
     qtd_atrasadas: txs.filter(t => t.status === 'atrasado' || t.status === 'parcial_atrasado').length,
+    qtd_parcial_atrasado: txs.filter(t => t.status === 'parcial_atrasado').length,
     qtd_nao_pagos: pendentes.length,
     qtd_total: txs.length,
     valor_em_aberto: pendentes.reduce(
