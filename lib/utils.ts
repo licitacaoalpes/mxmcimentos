@@ -1,8 +1,10 @@
 import type { Transacao, TransacaoComStatus, Status, Metrics } from './types'
 
-// Dias sem retorno para considerar uma transação como "atrasada"
-// Para alterar: mude este valor e faça redeploy
+// Dias sem nenhum pagamento para considerar "atrasado"
 export const DIAS_ATRASADO = 7
+
+// Dias com pagamento parcial para considerar "parcialmente atrasado"
+export const DIAS_PARCIAL_ATRASADO = 5
 
 export const MARCAS_CIMENTO = [
   'Votoran', 'Itambé', 'Cauê', 'Nassau',
@@ -16,13 +18,23 @@ export function diasDesde(dateStr: string): number {
 
 export function getStatus(t: Transacao): Status {
   if (t.data_retorno) return 'retornado'
-  if (diasDesde(t.data_transferencia) >= DIAS_ATRASADO) return 'atrasado'
+
+  const valorTotal = t.valor_transferido + t.lucro_esperado
+  const recebido = t.valor_recebido ?? 0
+  const dias = diasDesde(t.data_transferencia)
+
+  if (recebido > 0 && recebido < valorTotal) {
+    return dias >= DIAS_PARCIAL_ATRASADO ? 'parcial_atrasado' : 'parcial'
+  }
+
+  if (dias >= DIAS_ATRASADO) return 'atrasado'
   return 'pendente'
 }
 
 export function toComStatus(t: Transacao): TransacaoComStatus {
   return {
     ...t,
+    valor_recebido: t.valor_recebido ?? 0,
     status: getStatus(t),
     dias_em_aberto: diasDesde(t.data_transferencia),
   }
@@ -35,9 +47,13 @@ export function calcularMetrics(txs: TransacaoComStatus[]): Metrics {
     total_investido_pendente: pendentes.reduce((s, t) => s + t.valor_transferido, 0),
     total_a_receber: pendentes.reduce((s, t) => s + t.valor_transferido + t.lucro_esperado, 0),
     lucro_recebido: retornadas.reduce((s, t) => s + t.lucro_esperado, 0),
-    qtd_atrasadas: txs.filter(t => t.status === 'atrasado').length,
+    qtd_atrasadas: txs.filter(t => t.status === 'atrasado' || t.status === 'parcial_atrasado').length,
     qtd_nao_pagos: pendentes.length,
     qtd_total: txs.length,
+    valor_em_aberto: pendentes.reduce(
+      (s, t) => s + (t.valor_transferido + t.lucro_esperado) - (t.valor_recebido ?? 0),
+      0,
+    ),
   }
 }
 

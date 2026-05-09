@@ -1,22 +1,32 @@
+export interface Pagamento {
+  id: string
+  created_at: string
+  transacao_id: string
+  valor: number
+  data_pagamento: string  // YYYY-MM-DD
+  observacoes: string
+}
+
 export interface Transacao {
   id: string
   created_at: string
   updated_at: string
   cliente: string
   cliente_id?: string | null
-  // Campo populado via JOIN com a tabela clientes (quando cliente_id está preenchido)
   clientes?: { nome: string; cidade: string } | null
   marca_cimento: string
   quantidade_sacos: number
   valor_por_saco: number
   valor_transferido: number
   lucro_esperado: number
-  data_transferencia: string   // YYYY-MM-DD
-  data_retorno: string | null  // YYYY-MM-DD ou null
+  valor_recebido: number     // soma dos pagamentos (gerenciado por trigger)
+  data_transferencia: string // YYYY-MM-DD
+  data_retorno: string | null
   observacoes: string
+  pagamentos?: Pagamento[]
 }
 
-export type Status = 'pendente' | 'atrasado' | 'retornado'
+export type Status = 'pendente' | 'parcial' | 'parcial_atrasado' | 'atrasado' | 'retornado'
 
 export interface TransacaoComStatus extends Transacao {
   status: Status
@@ -30,6 +40,7 @@ export interface Metrics {
   qtd_atrasadas: number
   qtd_nao_pagos: number
   qtd_total: number
+  valor_em_aberto: number
 }
 
 export interface TransacaoInput {
@@ -40,6 +51,12 @@ export interface TransacaoInput {
   valor_por_saco: number
   lucro_esperado: number
   data_transferencia: string
+  observacoes?: string
+}
+
+export interface PagamentoInput {
+  valor: number
+  data_pagamento: string
   observacoes?: string
 }
 

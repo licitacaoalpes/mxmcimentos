@@ -8,9 +8,10 @@ export async function GET() {
     const supabase = getSupabase()
     const { data, error } = await supabase
       .from('transacoes')
-      .select('*, clientes(nome, cidade)')
-      .order('data_transferencia', { ascending: false })
-      .order('created_at', { ascending: false })
+      .select('*, clientes(nome, cidade), pagamentos(*)')
+      // Não-retornadas primeiro (nulls first), depois por data mais antiga
+      .order('data_retorno', { ascending: true, nullsFirst: true })
+      .order('data_transferencia', { ascending: true })
 
     if (error) throw error
 

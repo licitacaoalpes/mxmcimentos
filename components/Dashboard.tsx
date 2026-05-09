@@ -147,16 +147,28 @@ export default function Dashboard() {
     } catch { await fetchTransacoes() }
   }
 
-  async function handleMarcarPago(id: string, dataRetorno: string) {
+  async function handleRegistrarPagamento(id: string, valor: number, data: string, obs: string) {
+    const res = await fetch(`/api/transacoes/${id}/pagamentos`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ valor, data_pagamento: data, observacoes: obs }),
+    })
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}))
+      throw new Error(err?.error ?? 'Erro ao registrar pagamento.')
+    }
+    const updated: Transacao = await res.json()
+    setTransacoes(prev => prev.map(t => t.id === id ? toComStatus(updated) : t))
+  }
+
+  async function handleDeletePagamento(transacaoId: string, pagamentoId: string) {
     try {
-      const res = await fetch(`/api/transacoes/${id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ data_retorno: dataRetorno }),
+      const res = await fetch(`/api/transacoes/${transacaoId}/pagamentos/${pagamentoId}`, {
+        method: 'DELETE',
       })
       if (!res.ok) throw new Error()
-      const data: Transacao = await res.json()
-      setTransacoes(prev => prev.map(t => t.id === id ? toComStatus(data) : t))
+      const updated: Transacao = await res.json()
+      setTransacoes(prev => prev.map(t => t.id === transacaoId ? toComStatus(updated) : t))
     } catch { await fetchTransacoes() }
   }
 
@@ -324,7 +336,7 @@ export default function Dashboard() {
           )}
         </div>
 
-        <div className="max-w-5xl mx-auto px-4 py-5 space-y-4">
+        <div className="max-w-7xl mx-auto px-4 py-5 space-y-4">
 
           {isTransacoes && (
             <>
@@ -377,7 +389,8 @@ export default function Dashboard() {
                         transacoes={transacoes}
                         onEdit={t => { setEditando(t); setView('form') }}
                         onDelete={handleDelete}
-                        onMarcarPago={handleMarcarPago}
+                        onRegistrarPagamento={handleRegistrarPagamento}
+                        onDeletePagamento={handleDeletePagamento}
                       />
                       <p className="text-xs text-right pb-1" style={{ color: 'var(--c-text-4)' }}>
                         {transacoes.length} transação(ões) · Sincronizado com Supabase

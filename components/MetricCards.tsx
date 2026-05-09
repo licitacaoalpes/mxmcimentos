@@ -1,6 +1,7 @@
 import type { Metrics } from '@/lib/types'
 import { brl } from '@/lib/utils'
 
+
 interface Props {
   metrics: Metrics
 }
@@ -70,14 +71,14 @@ export default function MetricCards({ metrics }: Props) {
         }
       />
       <Card
-        label="Não pagos"
-        value={metrics.qtd_nao_pagos}
-        sub={`de ${metrics.qtd_total} total`}
-        accent="#3B82F6"
+        label="A receber ainda"
+        value={brl(metrics.valor_em_aberto)}
+        sub={`${metrics.qtd_nao_pagos} de ${metrics.qtd_total} em aberto`}
+        accent="#8B5CF6"
         icon={
-          <svg className="w-4 h-4" fill="none" stroke="#3B82F6" viewBox="0 0 24 24">
+          <svg className="w-4 h-4" fill="none" stroke="#8B5CF6" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-              d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
           </svg>
         }
       />
