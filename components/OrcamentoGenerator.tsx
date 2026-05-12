@@ -1,6 +1,6 @@
 ﻿'use client'
 
-import { useState, useCallback, useRef, useEffect } from 'react'
+import { useState, useCallback, useRef, useEffect, useLayoutEffect } from 'react'
 import Link from 'next/link'
 
 // ─── Logo MXM em base64 ──────────────────────────────────────────────────────
@@ -72,14 +72,16 @@ function AutoTextarea({
   onChange,
   placeholder,
   className = '',
+  autoComplete,
 }: {
   value: string
   onChange: (v: string) => void
   placeholder?: string
   className?: string
+  autoComplete?: string
 }) {
   const ref = useRef<HTMLTextAreaElement>(null)
-  useEffect(() => {
+  useLayoutEffect(() => {
     const el = ref.current
     if (!el) return
     el.style.height = 'auto'
@@ -93,6 +95,7 @@ function AutoTextarea({
       placeholder={placeholder}
       rows={1}
       className={className}
+      autoComplete={autoComplete}
       style={{ resize: 'none', overflow: 'hidden', minHeight: '42px' }}
     />
   )
@@ -117,6 +120,18 @@ export default function OrcamentoGenerator() {
 
   const [itens, setItens]       = useState<Item[]>([itemVazio()])
   const [desconto, setDesconto] = useState<string>('')
+  const [previewScale, setPreviewScale] = useState(1)
+
+  useEffect(() => {
+    function calcScale() {
+      const padding = 32
+      const available = window.innerWidth - padding
+      setPreviewScale(available < 794 ? available / 794 : 1)
+    }
+    calcScale()
+    window.addEventListener('resize', calcScale)
+    return () => window.removeEventListener('resize', calcScale)
+  }, [])
 
   // Totais
   const subtotal = itens.reduce((s, it) =>
@@ -156,48 +171,81 @@ export default function OrcamentoGenerator() {
 
         {/* Header */}
         <header className="bg-white border-b border-gray-200 sticky top-0 z-10">
-          <div className="max-w-5xl mx-auto px-4 h-14 flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <img src={LOGO_B64} alt="MXM" className="w-8 h-8 rounded-lg object-cover" />
-              <div>
-                <span className="text-sm font-semibold text-gray-900">MXM Construções</span>
-                <span className="hidden sm:inline text-xs text-gray-400 ml-2">· Gerador de Orçamento</span>
+          <div className="max-w-5xl mx-auto px-3 sm:px-4 h-14 flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2 min-w-0">
+              <img src={LOGO_B64} alt="MXM" className="w-8 h-8 rounded-lg object-cover shrink-0" />
+              <div className="min-w-0">
+                <span className="text-sm font-semibold text-gray-900 truncate block">MXM Construções</span>
+                <span className="hidden sm:block text-xs text-gray-400 truncate">Gerador de Orçamento</span>
               </div>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5 shrink-0">
+              {/* Dashboard — ícone no mobile, texto no desktop */}
               <Link
                 href="/dashboard"
-                className="px-3 py-2 text-sm text-gray-500 hover:text-gray-700
-                           border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+                className="flex items-center justify-center gap-1.5 h-9 px-2 sm:px-3 text-gray-500
+                           hover:text-gray-700 border border-gray-200 rounded-lg hover:bg-gray-50
+                           transition-colors min-w-[36px]"
+                title="Voltar ao Dashboard"
+                aria-label="Voltar ao Dashboard"
               >
-                ← Dashboard
+                <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                </svg>
+                <span className="hidden sm:inline text-sm">Dashboard</span>
               </Link>
+
+              {/* Preview/Editar */}
               <button
                 onClick={() => setView(v => v === 'form' ? 'preview' : 'form')}
-                className="px-4 py-2 text-sm font-medium text-gray-700
-                           border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+                className="flex items-center justify-center gap-1.5 h-9 px-2 sm:px-3 text-gray-700
+                           border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors min-w-[36px]"
+                title={view === 'form' ? 'Pré-visualizar' : 'Editar'}
+                aria-label={view === 'form' ? 'Pré-visualizar orçamento' : 'Voltar a editar'}
               >
-                {view === 'form' ? '👁 Pré-visualizar' : '✏️ Editar'}
+                {view === 'form' ? (
+                  <>
+                    <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                    </svg>
+                    <span className="hidden sm:inline text-sm font-medium">Prévia</span>
+                  </>
+                ) : (
+                  <>
+                    <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                    </svg>
+                    <span className="hidden sm:inline text-sm font-medium">Editar</span>
+                  </>
+                )}
               </button>
+
+              {/* Imprimir */}
               <button
                 onClick={handlePrint}
-                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white
-                           text-sm font-medium rounded-lg transition-colors"
+                className="flex items-center justify-center gap-1.5 h-9 px-2 sm:px-3
+                           bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors min-w-[36px]"
+                title="Imprimir / PDF"
+                aria-label="Imprimir ou salvar como PDF"
               >
-                🖨️ Imprimir / PDF
+                <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                </svg>
+                <span className="hidden sm:inline text-sm font-medium">Imprimir / PDF</span>
               </button>
             </div>
           </div>
         </header>
 
-        <main className="max-w-5xl mx-auto px-4 py-6 space-y-4">
+        <main className="max-w-5xl mx-auto px-3 sm:px-4 py-4 sm:py-6 space-y-3 sm:space-y-4">
 
           {/* ── Formulário de edição ── */}
           {view === 'form' && (
             <>
               {/* Identificação */}
-              <Section title="📋 Identificação do Orçamento">
-                <div className="grid grid-cols-3 gap-4">
+              <Section title="Identificação do Orçamento">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
                   <Field label="Nº do Orçamento">
                     <input value={numero} readOnly className="bg-gray-50 font-bold" />
                   </Field>
@@ -205,22 +253,23 @@ export default function OrcamentoGenerator() {
                     <input value={dataEmis} readOnly className="bg-gray-50" />
                   </Field>
                   <Field label="Validade">
-                    <input
+                    <AutoTextarea
                       value={cond.validade}
-                      onChange={e => setCond({ ...cond, validade: e.target.value })}
+                      onChange={v => setCond({ ...cond, validade: v })}
                     />
                   </Field>
                 </div>
               </Section>
 
               {/* Dados do cliente */}
-              <Section title="👤 Dados do Cliente">
-                <div className="grid grid-cols-4 gap-4">
-                  <Field label="Nome completo / Empresa" className="col-span-2">
+              <Section title="Dados do Cliente">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+                  <Field label="Nome / Empresa" className="col-span-2">
                     <AutoTextarea
                       value={cli.nome}
                       onChange={v => setCli({ ...cli, nome: v })}
                       placeholder="Ex: João da Silva"
+                      autoComplete="name"
                     />
                   </Field>
                   <Field label="CPF / CNPJ">
@@ -228,6 +277,7 @@ export default function OrcamentoGenerator() {
                       value={cli.cpf}
                       onChange={v => setCli({ ...cli, cpf: v })}
                       placeholder="000.000.000-00"
+                      autoComplete="off"
                     />
                   </Field>
                   <Field label="Telefone">
@@ -235,6 +285,7 @@ export default function OrcamentoGenerator() {
                       value={cli.tel}
                       onChange={v => setCli({ ...cli, tel: v })}
                       placeholder="(71) 99999-9999"
+                      autoComplete="tel"
                     />
                   </Field>
                   <Field label="E-mail" className="col-span-2">
@@ -242,6 +293,7 @@ export default function OrcamentoGenerator() {
                       value={cli.email}
                       onChange={v => setCli({ ...cli, email: v })}
                       placeholder="email@email.com"
+                      autoComplete="email"
                     />
                   </Field>
                   <Field label="Endereço de entrega" className="col-span-2">
@@ -249,13 +301,15 @@ export default function OrcamentoGenerator() {
                       value={cli.end}
                       onChange={v => setCli({ ...cli, end: v })}
                       placeholder="Rua, número, bairro, cidade"
+                      autoComplete="street-address"
                     />
                   </Field>
-                  <Field label="Descrição da obra / projeto" className="col-span-4">
+                  <Field label="Descrição da obra / projeto" className="col-span-2 sm:col-span-4">
                     <AutoTextarea
                       value={cli.obra}
                       onChange={v => setCli({ ...cli, obra: v })}
                       placeholder="Ex: Reforma residencial — sala e 2 quartos"
+                      autoComplete="off"
                     />
                   </Field>
                 </div>
@@ -263,21 +317,24 @@ export default function OrcamentoGenerator() {
 
               {/* Itens */}
               <Section
-                title="🧱 Itens do Orçamento"
+                title="Itens do Orçamento"
                 action={
                   <button
                     onClick={addItem}
-                    className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white
-                               text-xs font-medium rounded-lg transition-colors"
+                    className="flex items-center gap-1.5 px-3 py-2 bg-blue-600 hover:bg-blue-700
+                               text-white text-xs font-medium rounded-lg transition-colors"
                   >
-                    + Adicionar item
+                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" />
+                    </svg>
+                    Adicionar
                   </button>
                 }
               >
-                {/* Cabeçalho da tabela */}
-                <div className="grid gap-2 mb-2 px-1"
+                {/* ── DESKTOP: cabeçalho da tabela (hidden no mobile) ── */}
+                <div className="hidden md:grid gap-2 mb-2 px-1"
                   style={{ gridTemplateColumns: '3fr 72px 72px 90px 88px 28px' }}>
-                  {['Descrição do produto', 'Qtde', 'Unidade', 'Vl. Unit. (R$)', 'Total', ''].map((h, i) => (
+                  {['Descrição do produto', 'Qtde', 'Un.', 'Vl. Unit. (R$)', 'Total', ''].map((h, i) => (
                     <span key={i} className="text-[10px] font-bold text-gray-400 uppercase tracking-wide">
                       {h}
                     </span>
@@ -287,74 +344,141 @@ export default function OrcamentoGenerator() {
                 {itens.map((it, i) => {
                   const tot = (parseFloat(it.qtd) || 0) * (parseFloat(it.preco) || 0)
                   return (
-                    <div
-                      key={i}
-                      className={`grid gap-2 mb-2 p-1.5 rounded-lg items-center
-                        ${i % 2 === 0 ? 'bg-white' : 'bg-gray-50'}`}
-                      style={{ gridTemplateColumns: '3fr 72px 72px 90px 88px 28px' }}
-                    >
-                      <AutoTextarea
-                        value={it.desc}
-                        onChange={v => setItem(i, 'desc', v)}
-                        placeholder="Ex: Cimento Holcim CP II-E saco 50kg"
-                      />
-                      <input
-                        value={it.qtd}
-                        onChange={e => setItem(i, 'qtd', e.target.value)}
-                        type="number" min="0"
-                        className="text-center"
-                        placeholder="50"
-                      />
-                      <select
-                        value={it.un}
-                        onChange={e => setItem(i, 'un', e.target.value)}
-                      >
-                        {UNIDADES.map(u => <option key={u} value={u}>{u}</option>)}
-                      </select>
-                      <input
-                        value={it.preco}
-                        onChange={e => setItem(i, 'preco', e.target.value)}
-                        type="number" min="0" step="0.01"
-                        className="text-right"
-                        placeholder="42,00"
-                      />
-                      <div className="text-right text-sm font-bold text-blue-700 pr-1">
-                        {tot > 0 ? brl(tot) : '—'}
+                    <div key={i} className={`mb-2 rounded-xl border ${i % 2 === 0 ? 'bg-white border-gray-100' : 'bg-gray-50 border-gray-100'}`}>
+
+                      {/* ── MOBILE: card layout ── */}
+                      <div className="md:hidden p-3 space-y-2">
+                        <div className="flex items-start gap-2">
+                          <span className="text-xs font-bold text-gray-400 mt-2.5 w-5 shrink-0 text-center">
+                            {i + 1}
+                          </span>
+                          <div className="flex-1">
+                            <AutoTextarea
+                              value={it.desc}
+                              onChange={v => setItem(i, 'desc', v)}
+                              placeholder="Ex: Cimento Holcim CP II-E saco 50kg"
+                            />
+                          </div>
+                          <button
+                            onClick={() => removeItem(i)}
+                            className="mt-2 w-8 h-8 flex items-center justify-center rounded-lg
+                                       text-red-400 hover:text-red-600 hover:bg-red-50 transition-colors shrink-0"
+                            title="Remover item"
+                          >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                          </button>
+                        </div>
+                        <div className="flex gap-2 pl-7">
+                          <div className="flex-1">
+                            <label className="text-[10px] font-bold text-gray-400 uppercase mb-1 block">Qtde</label>
+                            <input
+                              value={it.qtd}
+                              onChange={e => setItem(i, 'qtd', e.target.value)}
+                              type="number" min="0"
+                              inputMode="numeric"
+                              className="text-center"
+                              placeholder="0"
+                            />
+                          </div>
+                          <div className="flex-1">
+                            <label className="text-[10px] font-bold text-gray-400 uppercase mb-1 block">Unidade</label>
+                            <select value={it.un} onChange={e => setItem(i, 'un', e.target.value)}>
+                              {UNIDADES.map(u => <option key={u} value={u}>{u}</option>)}
+                            </select>
+                          </div>
+                          <div className="flex-1">
+                            <label className="text-[10px] font-bold text-gray-400 uppercase mb-1 block">Vl. Unit.</label>
+                            <input
+                              value={it.preco}
+                              onChange={e => setItem(i, 'preco', e.target.value)}
+                              type="number" min="0" step="0.01"
+                              inputMode="decimal"
+                              className="text-right"
+                              placeholder="0,00"
+                            />
+                          </div>
+                          <div className="flex-1">
+                            <label className="text-[10px] font-bold text-gray-400 uppercase mb-1 block">Total</label>
+                            <div className="flex items-center justify-end h-[42px] text-sm font-bold text-blue-700">
+                              {tot > 0 ? brl(tot) : '—'}
+                            </div>
+                          </div>
+                        </div>
                       </div>
-                      <button
-                        onClick={() => removeItem(i)}
-                        className="text-red-400 hover:text-red-600 text-lg leading-none transition-colors"
-                        title="Remover item"
+
+                      {/* ── DESKTOP: grid layout ── */}
+                      <div
+                        className="hidden md:grid gap-2 p-1.5 items-center"
+                        style={{ gridTemplateColumns: '3fr 72px 72px 90px 88px 28px' }}
                       >
-                        ×
-                      </button>
+                        <AutoTextarea
+                          value={it.desc}
+                          onChange={v => setItem(i, 'desc', v)}
+                          placeholder="Ex: Cimento Holcim CP II-E saco 50kg"
+                        />
+                        <input
+                          value={it.qtd}
+                          onChange={e => setItem(i, 'qtd', e.target.value)}
+                          type="number" min="0"
+                          inputMode="numeric"
+                          className="text-center"
+                          placeholder="50"
+                        />
+                        <select value={it.un} onChange={e => setItem(i, 'un', e.target.value)}>
+                          {UNIDADES.map(u => <option key={u} value={u}>{u}</option>)}
+                        </select>
+                        <input
+                          value={it.preco}
+                          onChange={e => setItem(i, 'preco', e.target.value)}
+                          type="number" min="0" step="0.01"
+                          inputMode="decimal"
+                          className="text-right"
+                          placeholder="42,00"
+                        />
+                        <div className="text-right text-sm font-bold text-blue-700 pr-1">
+                          {tot > 0 ? brl(tot) : '—'}
+                        </div>
+                        <button
+                          onClick={() => removeItem(i)}
+                          className="w-7 h-7 flex items-center justify-center rounded-lg
+                                     text-red-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+                          title="Remover item"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                          </svg>
+                        </button>
+                      </div>
                     </div>
                   )
                 })}
 
                 {/* Totais */}
-                <div className="flex justify-end items-center gap-2 mt-3">
-                  <span className="text-xs text-gray-500">Desconto (R$):</span>
-                  <input
-                    type="number" min="0" step="0.01"
-                    value={desconto}
-                    onChange={e => setDesconto(e.target.value)}
-                    className="w-24 text-right"
-                    placeholder="0"
-                  />
-                </div>
-                <div className="flex justify-end mt-3 gap-4">
-                  <div className="text-right space-y-1">
+                <div className="mt-4 pt-3 border-t border-gray-100">
+                  <div className="flex flex-col sm:flex-row sm:justify-end gap-3">
+                    <div className="flex items-center gap-2 sm:justify-end">
+                      <span className="text-xs text-gray-500">Desconto (R$):</span>
+                      <input
+                        type="number" min="0" step="0.01"
+                        value={desconto}
+                        onChange={e => setDesconto(e.target.value)}
+                        className="w-28 text-right"
+                        placeholder="0"
+                      />
+                    </div>
+                  </div>
+                  <div className="flex flex-col items-end mt-3 gap-1">
                     <p className="text-xs text-gray-500">
-                      Subtotal:{' '}
-                      <span className="font-semibold text-gray-800">{brl(subtotal)}</span>
+                      Subtotal: <span className="font-semibold text-gray-800">{brl(subtotal)}</span>
                     </p>
                     {parseFloat(desconto) > 0 && (
                       <p className="text-xs text-green-600">
-                        Desconto: - {brl(parseFloat(desconto))}
+                        Desconto: − {brl(parseFloat(desconto))}
                       </p>
                     )}
-                    <div className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-bold">
+                    <div className="bg-blue-600 text-white px-5 py-2.5 rounded-xl text-sm font-bold mt-1 w-full sm:w-auto text-center">
                       TOTAL: {brl(total)}
                     </div>
                   </div>
@@ -362,21 +486,21 @@ export default function OrcamentoGenerator() {
               </Section>
 
               {/* Condições comerciais */}
-              <Section title="💳 Condições Comerciais">
-                <div className="grid grid-cols-2 gap-4">
-                  <Field label="Forma de pagamento" className="col-span-2 sm:col-span-1">
+              <Section title="Condições Comerciais">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                  <Field label="Forma de pagamento">
                     <AutoTextarea
                       value={cond.pagamento}
                       onChange={v => setCond({ ...cond, pagamento: v })}
                     />
                   </Field>
-                  <Field label="Prazo de entrega" className="col-span-2 sm:col-span-1">
+                  <Field label="Prazo de entrega">
                     <AutoTextarea
                       value={cond.entrega}
                       onChange={v => setCond({ ...cond, entrega: v })}
                     />
                   </Field>
-                  <Field label="Observações" className="col-span-2">
+                  <Field label="Observações" className="sm:col-span-2">
                     <textarea
                       value={cond.obs}
                       onChange={e => setCond({ ...cond, obs: e.target.value })}
@@ -391,25 +515,28 @@ export default function OrcamentoGenerator() {
           {/* ── Pré-visualização ── */}
           {view === 'preview' && (
             <div className="flex justify-center">
-              {/* largura A4 (794px) com as mesmas margens do @page (12mm top/bot, 14mm laterais) */}
-              <div style={{
-                width: 794,
-                minWidth: 794,
-                background: '#fff',
-                boxShadow: '0 2px 24px rgba(0,0,0,0.13)',
-                borderRadius: 4,
-                padding: '45px 53px',
-              }}>
-                <PrintDocument
-                  numero={numero}
-                  dataEmis={dataEmis}
-                  cli={cli}
-                  cond={cond}
-                  itens={itens}
-                  subtotal={subtotal}
-                  total={total}
-                  desconto={parseFloat(desconto) || 0}
-                />
+              {/* Wrapper que segura a altura real após o scale */}
+              <div style={{ width: 794 * previewScale, height: 'auto' }}>
+                <div style={{
+                  width: 794,
+                  background: '#fff',
+                  boxShadow: '0 2px 24px rgba(0,0,0,0.13)',
+                  borderRadius: 4,
+                  padding: '45px 53px',
+                  transformOrigin: 'top left',
+                  transform: `scale(${previewScale})`,
+                }}>
+                  <PrintDocument
+                    numero={numero}
+                    dataEmis={dataEmis}
+                    cli={cli}
+                    cond={cond}
+                    itens={itens}
+                    subtotal={subtotal}
+                    total={total}
+                    desconto={parseFloat(desconto) || 0}
+                  />
+                </div>
               </div>
             </div>
           )}
@@ -445,12 +572,19 @@ function Section({
   children: React.ReactNode
 }) {
   return (
-    <div className="bg-white rounded-xl border border-gray-200 p-5">
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-xs font-bold text-blue-700 uppercase tracking-widest">{title}</h3>
-        {action}
+    <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+      {/* Barra superior de acento */}
+      <div className="h-0.5 bg-gradient-to-r from-blue-600 to-blue-400" />
+      <div className="p-4 sm:p-5">
+        <div className="flex items-center justify-between mb-3 sm:mb-4">
+          <div className="flex items-center gap-2">
+            <span className="w-1 h-4 bg-blue-600 rounded-full shrink-0" aria-hidden="true" />
+            <h3 className="text-xs font-bold text-gray-700 uppercase tracking-widest">{title}</h3>
+          </div>
+          {action}
+        </div>
+        {children}
       </div>
-      {children}
     </div>
   )
 }
