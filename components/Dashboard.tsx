@@ -10,6 +10,7 @@ import TransacaoTable from './TransacaoTable'
 import TransacaoForm from './TransacaoForm'
 import ClienteList from './ClienteList'
 import Analytics from './Analytics'
+import Link from 'next/link'
 
 type Tab = 'transacoes' | 'clientes' | 'analises'
 type View = 'list' | 'form'
@@ -226,6 +227,20 @@ export default function Dashboard() {
           ))}
         </nav>
 
+        <div className="p-3" style={{ borderTop: '1px solid var(--c-sidebar-border)' }}>
+          <Link
+            href="/orcamento"
+            className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all duration-150 w-full"
+            style={{ color: 'var(--c-sidebar-text)', border: '1px solid transparent' }}
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8}
+                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+            Orçamento
+          </Link>
+        </div>
+
         <div className="p-3 space-y-1" style={{ borderTop: '1px solid var(--c-sidebar-border)' }}>
           <ThemeToggle />
           <button
@@ -280,6 +295,17 @@ export default function Dashboard() {
               ← Voltar
             </button>
           )}
+          <Link
+            href="/orcamento"
+            className="w-9 h-9 rounded-lg flex items-center justify-center transition-all cursor-pointer"
+            style={{ color: 'var(--c-text-3)', border: '1px solid var(--c-border)' }}
+            title="Gerar Orçamento"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8}
+                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+          </Link>
           <ThemeToggleIcon />
           <button
             onClick={handleLogout}
@@ -444,6 +470,17 @@ export default function Dashboard() {
             <span className="text-[10px] font-semibold">{item.label}</span>
           </button>
         ))}
+        <Link
+          href="/orcamento"
+          className="flex flex-col items-center gap-1 px-4 py-1 transition-all"
+          style={{ color: 'var(--c-sidebar-text)' }}
+        >
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8}
+              d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          </svg>
+          <span className="text-[10px] font-semibold">Orçamento</span>
+        </Link>
       </nav>
     </div>
   )
