@@ -173,6 +173,24 @@ export default function Dashboard() {
     } catch { await fetchTransacoes() }
   }
 
+  async function handleEditarPagamento(
+    transacaoId: string,
+    pagamentoId: string,
+    dados: { valor: number; data_pagamento: string; observacoes: string }
+  ) {
+    const res = await fetch(`/api/transacoes/${transacaoId}/pagamentos/${pagamentoId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(dados),
+    })
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}))
+      throw new Error(err?.error ?? 'Erro ao editar pagamento.')
+    }
+    const updated: Transacao = await res.json()
+    setTransacoes(prev => prev.map(t => t.id === transacaoId ? toComStatus(updated) : t))
+  }
+
   async function handleLogout() {
     await fetch('/api/auth', { method: 'DELETE' })
     router.push('/login')
@@ -425,6 +443,7 @@ export default function Dashboard() {
                         onDelete={handleDelete}
                         onRegistrarPagamento={handleRegistrarPagamento}
                         onDeletePagamento={handleDeletePagamento}
+                        onEditarPagamento={handleEditarPagamento}
                       />
                       <p className="text-xs text-right pb-1" style={{ color: 'var(--c-text-4)' }}>
                         {transacoes.length} transação(ões) · Sincronizado com Supabase

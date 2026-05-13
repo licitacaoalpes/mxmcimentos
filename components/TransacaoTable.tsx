@@ -13,6 +13,18 @@ interface Props {
   onDelete: (id: string) => void
   onRegistrarPagamento: (id: string, valor: number, data: string, obs: string) => Promise<void>
   onDeletePagamento: (transacaoId: string, pagamentoId: string) => Promise<void>
+  onEditarPagamento: (
+    transacaoId: string,
+    pagamentoId: string,
+    dados: { valor: number; data_pagamento: string; observacoes: string }
+  ) => Promise<void>
+}
+
+interface EditandoPagamento {
+  id: string
+  valor: string
+  data: string
+  obs: string
 }
 
 const FILTROS: { key: Filtro; label: string }[] = [
@@ -67,7 +79,7 @@ function ProgressBar({ recebido, total }: { recebido: number; total: number }) {
 }
 
 export default function TransacaoTable({
-  transacoes, onEdit, onDelete, onRegistrarPagamento, onDeletePagamento,
+  transacoes, onEdit, onDelete, onRegistrarPagamento, onDeletePagamento, onEditarPagamento,
 }: Props) {
   const [filtro, setFiltro] = useState<Filtro>('todos')
   const [pagModal, setPagModal] = useState<string | null>(null)
@@ -76,6 +88,9 @@ export default function TransacaoTable({
   const [obsPag, setObsPag] = useState('')
   const [loadingPag, setLoadingPag] = useState(false)
   const [erroPag, setErroPag] = useState('')
+  const [editandoPagamento, setEditandoPagamento] = useState<EditandoPagamento | null>(null)
+  const [loadingEdit, setLoadingEdit] = useState(false)
+  const [erroEdit, setErroEdit] = useState('')
 
   const txModal = pagModal ? transacoes.find(t => t.id === pagModal) : null
   const valorTotal = txModal ? txModal.valor_transferido + txModal.lucro_esperado : 0
@@ -117,6 +132,27 @@ export default function TransacaoTable({
   async function removerPagamento(transacaoId: string, pagamentoId: string) {
     if (!confirm('Remover este pagamento?')) return
     try { await onDeletePagamento(transacaoId, pagamentoId) } catch { /* atualizado pelo parent */ }
+  }
+
+  async function salvarEdicaoPagamento() {
+    if (!pagModal || !editandoPagamento) return
+    const valor = parseFloat(editandoPagamento.valor.replace(',', '.'))
+    if (isNaN(valor) || valor <= 0) { setErroEdit('Informe um valor válido.'); return }
+    if (!editandoPagamento.data) { setErroEdit('Informe a data.'); return }
+    setLoadingEdit(true)
+    setErroEdit('')
+    try {
+      await onEditarPagamento(pagModal, editandoPagamento.id, {
+        valor,
+        data_pagamento: editandoPagamento.data,
+        observacoes: editandoPagamento.obs,
+      })
+      setEditandoPagamento(null)
+    } catch (e: unknown) {
+      setErroEdit(e instanceof Error ? e.message : 'Erro ao salvar.')
+    } finally {
+      setLoadingEdit(false)
+    }
   }
 
   const contagem: Record<Filtro, number> = {
@@ -235,13 +271,13 @@ export default function TransacaoTable({
 
               {/* Ações */}
               <div className="flex gap-2 mt-3 pt-3" style={{ borderTop: '1px solid var(--c-border)' }}>
-                {t.status !== 'retornado' && (
-                  <button onClick={() => abrirModal(t.id)}
-                    className="flex-1 py-2 rounded-xl text-xs font-bold cursor-pointer transition-all"
-                    style={{ background: 'rgba(139,92,246,0.1)', border: '1px solid rgba(139,92,246,0.2)', color: '#A78BFA' }}>
-                    + Pagamento
-                  </button>
-                )}
+                <button onClick={() => abrirModal(t.id)}
+                  className="flex-1 py-2 rounded-xl text-xs font-bold cursor-pointer transition-all"
+                  style={t.status === 'retornado'
+                    ? { background: 'rgba(16,185,129,0.08)', border: '1px solid rgba(16,185,129,0.2)', color: 'var(--c-green-text)' }
+                    : { background: 'rgba(139,92,246,0.1)', border: '1px solid rgba(139,92,246,0.2)', color: '#A78BFA' }}>
+                  {t.status === 'retornado' ? 'Pagamentos' : '+ Pagamento'}
+                </button>
                 <button onClick={() => onEdit(t)}
                   className="py-2 px-4 rounded-xl text-xs font-bold cursor-pointer transition-all"
                   style={{ background: 'var(--c-accent)', border: '1px solid var(--c-border-2)', color: 'var(--c-blue-text)' }}>
@@ -370,13 +406,13 @@ export default function TransacaoTable({
                     <div className="flex flex-col gap-2">
                       <StatusBadge status={t.status} />
                       <div className="flex items-center gap-1.5">
-                        {t.status !== 'retornado' && (
-                          <button onClick={() => abrirModal(t.id)}
-                            className="flex-1 py-1 rounded-lg text-[10px] font-bold cursor-pointer transition-all text-center"
-                            style={{ background: 'rgba(139,92,246,0.12)', border: '1px solid rgba(139,92,246,0.2)', color: '#A78BFA' }}>
-                            + Pgto
-                          </button>
-                        )}
+                        <button onClick={() => abrirModal(t.id)}
+                          className="flex-1 py-1 rounded-lg text-[10px] font-bold cursor-pointer transition-all text-center"
+                          style={t.status === 'retornado'
+                            ? { background: 'rgba(16,185,129,0.08)', border: '1px solid rgba(16,185,129,0.2)', color: 'var(--c-green-text)' }
+                            : { background: 'rgba(139,92,246,0.12)', border: '1px solid rgba(139,92,246,0.2)', color: '#A78BFA' }}>
+                          {t.status === 'retornado' ? 'Pgtos' : '+ Pgto'}
+                        </button>
                         <button onClick={() => onEdit(t)}
                           className="py-1 px-2 rounded-lg text-[10px] font-bold cursor-pointer transition-all"
                           style={{ background: 'var(--c-accent)', border: '1px solid var(--c-border-2)', color: 'var(--c-blue-text)' }}>
@@ -409,7 +445,9 @@ export default function TransacaoTable({
             style={{ background: 'var(--c-elevated)', border: '1px solid var(--c-border-2)', boxShadow: 'var(--c-modal-shadow)' }}>
 
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-base font-extrabold" style={{ color: 'var(--c-text)' }}>Registrar pagamento</h3>
+              <h3 className="text-base font-extrabold" style={{ color: 'var(--c-text)' }}>
+                {txModal.status === 'retornado' ? 'Pagamentos registrados' : 'Registrar pagamento'}
+              </h3>
               <button onClick={fecharModal}
                 className="w-7 h-7 rounded-lg flex items-center justify-center cursor-pointer"
                 style={{ color: 'var(--c-text-3)', border: '1px solid var(--c-border)' }}>
@@ -452,34 +490,109 @@ export default function TransacaoTable({
                 <p className="text-[10px] uppercase font-bold mb-2" style={{ color: 'var(--c-text-4)' }}>
                   Histórico ({pagamentosOrdenados.length})
                 </p>
-                <div className="space-y-1.5 max-h-40 overflow-y-auto pr-1">
-                  {pagamentosOrdenados.map(p => (
-                    <div key={p.id} className="flex items-center justify-between rounded-lg px-3 py-2"
-                      style={{ background: 'var(--c-accent)', border: '1px solid var(--c-border)' }}>
-                      <div className="min-w-0 flex-1">
-                        <span className="text-xs font-bold" style={{ color: 'var(--c-green-text)' }}>{brl(p.valor)}</span>
-                        <span className="text-xs ml-2" style={{ color: 'var(--c-text-3)' }}>{fmtDate(p.data_pagamento)}</span>
-                        {p.observacoes && (
-                          <span className="text-xs ml-1.5 italic truncate block" style={{ color: 'var(--c-text-4)' }}>
-                            {p.observacoes}
-                          </span>
-                        )}
+                <div className="space-y-1.5 max-h-52 overflow-y-auto pr-1">
+                  {pagamentosOrdenados.map(p => {
+                    const isEditing = editandoPagamento?.id === p.id
+                    if (isEditing) {
+                      return (
+                        <div key={p.id} className="rounded-lg px-3 py-2.5 space-y-2"
+                          style={{ background: 'var(--c-accent)', border: '1px solid rgba(139,92,246,0.3)' }}>
+                          <div className="grid grid-cols-2 gap-2">
+                            <div>
+                              <label className="text-[9px] uppercase font-bold block mb-1" style={{ color: 'var(--c-text-4)' }}>Valor (R$)</label>
+                              <input
+                                type="number" step="0.01" min="0.01"
+                                value={editandoPagamento.valor}
+                                onChange={e => setEditandoPagamento(prev => prev ? { ...prev, valor: e.target.value } : null)}
+                              />
+                            </div>
+                            <div>
+                              <label className="text-[9px] uppercase font-bold block mb-1" style={{ color: 'var(--c-text-4)' }}>Data</label>
+                              <input
+                                type="date"
+                                value={editandoPagamento.data}
+                                onChange={e => setEditandoPagamento(prev => prev ? { ...prev, data: e.target.value } : null)}
+                              />
+                            </div>
+                          </div>
+                          <input
+                            type="text"
+                            value={editandoPagamento.obs}
+                            placeholder="Observação (opcional)..."
+                            onChange={e => setEditandoPagamento(prev => prev ? { ...prev, obs: e.target.value } : null)}
+                          />
+                          {erroEdit && (
+                            <p className="text-xs font-medium" style={{ color: 'var(--c-red-text)' }}>{erroEdit}</p>
+                          )}
+                          <div className="flex gap-1.5">
+                            <button onClick={salvarEdicaoPagamento} disabled={loadingEdit}
+                              className="flex-1 py-1.5 rounded-lg text-xs font-bold cursor-pointer disabled:opacity-60"
+                              style={{ background: 'linear-gradient(135deg,#8B5CF6,#7C3AED)', color: '#fff' }}>
+                              {loadingEdit ? 'Salvando…' : 'Salvar'}
+                            </button>
+                            <button onClick={() => { setEditandoPagamento(null); setErroEdit('') }}
+                              className="px-3 py-1.5 rounded-lg text-xs font-semibold cursor-pointer"
+                              style={{ border: '1px solid var(--c-border)', color: 'var(--c-text-3)' }}>
+                              Cancelar
+                            </button>
+                          </div>
+                        </div>
+                      )
+                    }
+                    return (
+                      <div key={p.id} className="flex items-center justify-between rounded-lg px-3 py-2"
+                        style={{ background: 'var(--c-accent)', border: '1px solid var(--c-border)' }}>
+                        <div className="min-w-0 flex-1">
+                          <span className="text-xs font-bold" style={{ color: 'var(--c-green-text)' }}>{brl(p.valor)}</span>
+                          <span className="text-xs ml-2" style={{ color: 'var(--c-text-3)' }}>{fmtDate(p.data_pagamento)}</span>
+                          {p.observacoes && (
+                            <span className="text-xs ml-1.5 italic truncate block" style={{ color: 'var(--c-text-4)' }}>
+                              {p.observacoes}
+                            </span>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-1 shrink-0 ml-2">
+                          <button
+                            onClick={() => {
+                              setErroEdit('')
+                              setEditandoPagamento({ id: p.id, valor: p.valor.toString(), data: p.data_pagamento, obs: p.observacoes ?? '' })
+                            }}
+                            className="w-6 h-6 rounded flex items-center justify-center cursor-pointer"
+                            style={{ color: 'var(--c-blue-text)', border: '1px solid rgba(59,130,246,0.2)' }}
+                            title="Editar">
+                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                            </svg>
+                          </button>
+                          <button onClick={() => removerPagamento(txModal.id, p.id)}
+                            className="w-6 h-6 rounded flex items-center justify-center cursor-pointer"
+                            style={{ color: 'var(--c-red-text)', border: '1px solid rgba(239,68,68,0.2)' }}
+                            title="Remover">
+                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                          </button>
+                        </div>
                       </div>
-                      <button onClick={() => removerPagamento(txModal.id, p.id)}
-                        className="w-6 h-6 rounded flex items-center justify-center shrink-0 ml-2 cursor-pointer"
-                        style={{ color: 'var(--c-red-text)', border: '1px solid rgba(239,68,68,0.2)' }}>
-                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                      </button>
-                    </div>
-                  ))}
+                    )
+                  })}
                 </div>
               </div>
             )}
 
-            {/* Formulário */}
-            <div className="space-y-3">
+            {/* Formulário — escondido quando já quitado */}
+            {saldoRestante <= 0 && (
+              <div className="rounded-xl px-4 py-3 mb-4 text-center"
+                style={{ background: 'rgba(16,185,129,0.08)', border: '1px solid rgba(16,185,129,0.2)' }}>
+                <p className="text-xs font-semibold" style={{ color: 'var(--c-green-text)' }}>
+                  ✓ Transação totalmente quitada
+                </p>
+                <p className="text-[10px] mt-0.5" style={{ color: 'var(--c-text-4)' }}>
+                  Exclua um pagamento acima para corrigir o valor.
+                </p>
+              </div>
+            )}
+            <div className="space-y-3" style={{ display: saldoRestante > 0 ? undefined : 'none' }}>
               <p className="text-[10px] uppercase font-bold" style={{ color: 'var(--c-text-4)' }}>Novo pagamento</p>
               <div className="grid grid-cols-2 gap-3">
                 <div>
@@ -520,15 +633,17 @@ export default function TransacaoTable({
             </div>
 
             <div className="flex gap-2 mt-5">
-              <button onClick={confirmarPagamento} disabled={loadingPag}
-                className="flex-1 py-2.5 rounded-xl text-sm font-bold text-white cursor-pointer disabled:opacity-60 transition-all"
-                style={{ background: 'linear-gradient(135deg,#8B5CF6,#7C3AED)', boxShadow: '0 0 20px rgba(139,92,246,0.2)' }}>
-                {loadingPag ? 'Registrando…' : 'Registrar pagamento'}
-              </button>
+              {saldoRestante > 0 && (
+                <button onClick={confirmarPagamento} disabled={loadingPag}
+                  className="flex-1 py-2.5 rounded-xl text-sm font-bold text-white cursor-pointer disabled:opacity-60 transition-all"
+                  style={{ background: 'linear-gradient(135deg,#8B5CF6,#7C3AED)', boxShadow: '0 0 20px rgba(139,92,246,0.2)' }}>
+                  {loadingPag ? 'Registrando…' : 'Registrar pagamento'}
+                </button>
+              )}
               <button onClick={fecharModal}
-                className="px-4 py-2.5 rounded-xl text-sm font-semibold cursor-pointer transition-all"
+                className="flex-1 py-2.5 rounded-xl text-sm font-semibold cursor-pointer transition-all"
                 style={{ color: 'var(--c-text-2)', border: '1px solid var(--c-border)' }}>
-                Cancelar
+                Fechar
               </button>
             </div>
           </div>
