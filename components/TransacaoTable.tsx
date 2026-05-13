@@ -110,7 +110,7 @@ export default function TransacaoTable({
     setErroPag('')
   }
 
-  function fecharModal() { setPagModal(null); setErroPag('') }
+  function fecharModal() { setPagModal(null); setErroPag(''); setEditandoPagamento(null); setErroEdit('') }
 
   async function confirmarPagamento() {
     if (!pagModal) return
@@ -131,7 +131,7 @@ export default function TransacaoTable({
 
   async function removerPagamento(transacaoId: string, pagamentoId: string) {
     if (!confirm('Remover este pagamento?')) return
-    try { await onDeletePagamento(transacaoId, pagamentoId) } catch { /* atualizado pelo parent */ }
+    try { await onDeletePagamento(transacaoId, pagamentoId); fecharModal() } catch { /* atualizado pelo parent */ }
   }
 
   async function salvarEdicaoPagamento() {
@@ -147,7 +147,7 @@ export default function TransacaoTable({
         data_pagamento: editandoPagamento.data,
         observacoes: editandoPagamento.obs,
       })
-      setEditandoPagamento(null)
+      fecharModal()
     } catch (e: unknown) {
       setErroEdit(e instanceof Error ? e.message : 'Erro ao salvar.')
     } finally {

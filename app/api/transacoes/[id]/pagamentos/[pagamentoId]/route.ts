@@ -22,7 +22,7 @@ export async function PUT(req: NextRequest, { params }: Params) {
     // 1. Atualiza o pagamento
     const { error: updateErr } = await supabase
       .from('pagamentos')
-      .update({ valor: Number(valor), data_pagamento, observacoes: observacoes || null })
+      .update({ valor: Number(valor), data_pagamento, observacoes: observacoes ?? '' })
       .eq('id', pagamentoId)
       .eq('transacao_id', id)
 
@@ -69,7 +69,8 @@ export async function PUT(req: NextRequest, { params }: Params) {
     return NextResponse.json(updated)
   } catch (err) {
     console.error('[PUT /api/transacoes/:id/pagamentos/:pagamentoId]', err)
-    return NextResponse.json({ error: 'Erro ao editar pagamento.' }, { status: 500 })
+    const msg = err instanceof Error ? err.message : JSON.stringify(err)
+    return NextResponse.json({ error: `Erro ao editar pagamento: ${msg}` }, { status: 500 })
   }
 }
 
