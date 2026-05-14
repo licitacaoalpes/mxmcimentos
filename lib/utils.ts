@@ -40,11 +40,18 @@ export function toComStatus(t: Transacao): TransacaoComStatus {
   }
 }
 
+/** Principal ainda não recuperado: recebimentos abatem primeiro o lucro esperado, depois o capital. */
+export function capitalEmAberto(t: Transacao): number {
+  const recebido = t.valor_recebido ?? 0
+  const abatimentoPrincipal = Math.max(0, recebido - t.lucro_esperado)
+  return Math.max(0, t.valor_transferido - abatimentoPrincipal)
+}
+
 export function calcularMetrics(txs: TransacaoComStatus[]): Metrics {
   const pendentes = txs.filter(t => t.status !== 'retornado')
   const retornadas = txs.filter(t => t.status === 'retornado')
   return {
-    total_investido_pendente: pendentes.reduce((s, t) => s + t.valor_transferido, 0),
+    total_investido_pendente: pendentes.reduce((s, t) => s + capitalEmAberto(t), 0),
     total_a_receber: pendentes.reduce((s, t) => s + t.valor_transferido + t.lucro_esperado, 0),
     lucro_recebido: retornadas.reduce((s, t) => s + t.lucro_esperado, 0),
     qtd_atrasadas: txs.filter(t => t.status === 'atrasado' || t.status === 'parcial_atrasado').length,
